@@ -1,44 +1,24 @@
 # FOCUS360 STUDIO website
 
-Plain HTML, CSS and JavaScript. No installs, no build step, no paid tools.
+Static site (HTML/CSS/JS) with a Supabase backend.
 
-## 1. See it on your computer
-Unzip the folder and double-click `index.html`. It opens in your browser.
-(Optional local server: open a terminal in the folder and run `python -m http.server 8000`, then visit http://localhost:8000)
+## Setup
+1. Supabase > SQL Editor: run `sql/schema.sql`.
+2. Supabase > Authentication > Users: create your admin login, then run the last line of the SQL file (the `insert into public.admins` line) with your email. Turn off public sign-ups (Authentication > Providers > Email).
+3. Put your Project URL and **anon** key in `js/supabase-config.js`. Never commit the service_role key.
+4. Edit contact details and social links in `js/config.js`.
+5. Open `admin.html` to add projects and read messages.
 
-## 2. Replace the placeholders (10 minutes)
-Open `js/config.js` in any text editor (Notepad, VS Code) and change:
-- `whatsappNumber` — digits only, with country code. Ghana: 0244 123 456 becomes `233244123456`
-- `email`, `phoneDisplay`
-- `social` links (set one to `""` to hide it)
-Then replace the draft text in `about.html` ("Our story") with your real story.
+Testimonials: add rows to the `testimonials` table in the Supabase Table Editor. The section hides itself while the table is empty.
 
-## 3. Add your real work (two ways)
-**Easiest, no code:** use the admin page. Follow `ADMIN-SETUP.md` (Supabase, free).
-**Or by hand:**
-Open `js/projects.js`. The instructions are at the top of the file:
-copy a project block, change the title/category, set `image: "assets/work/your-file.jpg"`, `sample: false`.
-Put the images in `assets/work/`. New categories create new filter buttons automatically.
-Set `featured: true` to show a project on the home page (first 4 featured).
-Replace the sample testimonials at the bottom of that file with real quotes, or delete them.
+## Homepage CMS upgrade
 
-## 4. Make the contact form work
-Set `formMode` in `js/config.js`:
-- `"auto"` (default): saves messages to your Supabase admin inbox if you set that up, otherwise uses `"mailto"`.
-- `"mailto"`: opens the visitor's email app addressed to you. Works with zero setup.
-- `"formspree"`: sign up free at formspree.io, create a form, paste its ID into `formspreeId`. Messages arrive in your inbox.
-- `"netlify"`: only if you host on Netlify; messages appear in your Netlify dashboard (Forms).
-Free plans have monthly limits; check current limits on their sites.
-The "Send via WhatsApp" button always works.
+After the original `sql/schema.sql` has been run, run `sql/upgrade-homepage.sql` in Supabase SQL Editor.
+This creates the `site_content` table, enables public read access for published homepage copy, and restricts writes to authenticated admins.
+The admin dashboard now includes a Homepage content editor. Homepage copy is loaded from Supabase with the original HTML as a fallback.
 
-## 5. Publish for free
-**Netlify (easiest):** go to app.netlify.com/drop, drag the whole folder in. You get a free `something.netlify.app` address instantly. Rename it in Site settings.
-**GitHub Pages:** create a free GitHub account and a new public repository, upload all files, then Settings > Pages > Deploy from branch > main > /(root). Your site appears at `username.github.io/repo-name`.
-A custom domain (like focus360studio.com) is the only optional paid item; the free addresses above cost nothing.
-
-## 6. After you have your web address
-Replace `YOUR-DOMAIN.com` in `robots.txt` and `sitemap.xml` with your real address, then submit the sitemap in Google Search Console (free).
-
-## Changing colours and fonts
-Colours are variables at the top of `css/style.css` (`--ink`, `--bone`, `--accent`).
-The navigation and footer are repeated in each page's HTML; if you change a link, change it in all five pages.
+Before deploying:
+- Add your Supabase Project URL and anon/public key to `js/supabase-config.js`.
+- Confirm your signed-in user has a row in `public.admins`.
+- Never use the Supabase `service_role` key in browser code.
+- Test the public site and admin dashboard after deployment.
