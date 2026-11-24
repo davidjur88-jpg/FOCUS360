@@ -551,3 +551,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .js .reveal { opacity: 1; transform: none; }
   .marquee { overflow-x: auto; }
 }
+
+/* discreet admin link in footer */
+.admin-link { opacity: 0.55; text-decoration: none; }
+.admin-link:hover, .admin-link:focus-visible { opacity: 1; color: var(--accent); }
