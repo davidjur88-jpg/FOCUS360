@@ -9,6 +9,6 @@
    Leave both empty ("") and the site simply uses the sample projects.
    ========================================================================== */
 window.F360_SUPABASE = {
-  url: "",
-  anonKey: ""
+  url: "https://pajjrkiyfffygeuczawb.supabase.co",
+  anonKey: "sb_publishable_rGIbCC5j8jLGEO6mG58fYQ_8o3GlzWs"
 };
