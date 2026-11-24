@@ -190,6 +190,57 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Supabase (optional): load projects/testimonials, save contact messages
+   * ------------------------------------------------------------------ */
+  var S = window.F360_SUPABASE || {};
+  var cloudOn = !!(S.url && S.anonKey);
+
+  function cloudHeaders(extra) {
+    var h = { apikey: S.anonKey };
+    if (String(S.anonKey).indexOf("eyJ") === 0) h.Authorization = "Bearer " + S.anonKey;
+    for (var k in extra) h[k] = extra[k];
+    return h;
+  }
+  function cloudUrl(path) { return String(S.url).replace(/\/+$/, "") + "/rest/v1/" + path; }
+  function cloudGet(path) {
+    return fetch(cloudUrl(path), { headers: cloudHeaders() }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+  }
+  function mapProject(r) {
+    return {
+      id: r.slug, title: r.title, category: r.category || "General", year: r.year || "",
+      client: r.client || "", sample: false, featured: !!r.featured, ratio: r.ratio || "portrait",
+      image: r.image_url || "", imageAlt: r.title, gallery: r.gallery || [],
+      services: String(r.services || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean),
+      summary: r.summary || "", description: r.description || "",
+      art: "brand", colors: ["#0c0c0b", "#f1eee6", "#ff4d1f"]
+    };
+  }
+  function mapTestimonial(r) { return { sample: false, quote: r.quote, name: r.name, role: r.role || "" }; }
+
+  function loadCloud() {
+    var live = Promise.all([
+      cloudGet("projects?select=*&published=eq.true&order=sort_order.asc,created_at.desc"),
+      cloudGet("testimonials?select=*&published=eq.true&order=sort_order.asc,created_at.asc")
+    ]).then(function (res) {
+      var d = { p: res[0].map(mapProject), t: res[1].map(mapTestimonial) };
+      try { localStorage.setItem("f360-cache", JSON.stringify(d)); } catch (e) {}
+      return d;
+    }).catch(function () {
+      try { return JSON.parse(localStorage.getItem("f360-cache")); } catch (e) { return null; }
+    });
+    var timeout = new Promise(function (res) { setTimeout(function () { res(null); }, 3500); });
+    return Promise.race([live, timeout]).then(function (d) {
+      if (!d) return;
+      if (d.p && d.p.length) PROJECTS = d.p;   // no real projects yet -> keep the samples
+      TESTIMONIALS = d.t || [];                 // real list (may be empty -> section hides)
+    });
+  }
+
+  function boot() {
+  /* ------------------------------------------------------------------ *
    * Featured projects (home page)
    * ------------------------------------------------------------------ */
   var featBox = $("[data-featured]");
@@ -205,6 +256,10 @@
    * Testimonials (home page)
    * ------------------------------------------------------------------ */
   var quoteBox = $("[data-testimonials]");
+  if (quoteBox && !TESTIMONIALS.length) {
+    var qs = quoteBox.closest("section");
+    if (qs) qs.hidden = true;
+  }
   if (quoteBox && TESTIMONIALS.length) {
     function quote(t, big) {
       return '<figure class="quote ' + (big ? "quote--big" : "quote--small") + '">' +
@@ -249,7 +304,7 @@
       '<h2 id="modal-title" class="display h-md">' + esc(p.title) + "</h2>" +
       (p.sample ? '<p><span class="tag">Sample project — placeholder content</span></p>' : "") +
       '<p class="modal__sum">' + esc(p.summary) + "</p>" +
-      "<p>" + esc(p.description) + "</p>" +
+      String(p.description || "").split(/\n{2,}/).filter(Boolean).map(function (para) { return "<p>" + esc(para).replace(/\n/g, "<br>") + "</p>"; }).join("") +
       '<dl class="specs">' +
       (p.client ? "<div><dt>Client</dt><dd>" + esc(p.client) + "</dd></div>" : "") +
       ((p.services || []).length ? "<div><dt>Scope</dt><dd>" + p.services.map(esc).join(" / ") + "</dd></div>" : "") +
@@ -387,9 +442,19 @@
       if (field("website")) return; // honeypot: bots fill this in, people never see it
       if (!form.reportValidity()) return;
       var data = new FormData(form);
-      var mode = C.formMode || "mailto";
+      var mode = C.formMode || "auto";
+      if (mode === "auto") mode = cloudOn ? "supabase" : "mailto";
 
-      if (mode === "formspree") {
+      if (mode === "supabase") {
+        say("Sending…");
+        fetch(cloudUrl("messages"), {
+          method: "POST",
+          headers: cloudHeaders({ "Content-Type": "application/json", Prefer: "return=minimal" }),
+          body: JSON.stringify({ name: field("name"), email: field("email"), phone: field("phone") || null, service: field("service") || null, message: field("message") })
+        })
+          .then(function (r) { if (!r.ok) throw new Error("bad"); form.reset(); say("Thank you — your message has been sent. We will reply soon.", "ok"); })
+          .catch(function () { say("Something went wrong. Please try WhatsApp or email instead.", "err"); });
+      } else if (mode === "formspree") {
         if (!C.formspreeId) { say("The form is not connected yet. Please use WhatsApp or email instead.", "err"); return; }
         say("Sending…");
         fetch("https://formspree.io/f/" + encodeURIComponent(C.formspreeId), { method: "POST", body: data, headers: { Accept: "application/json" } })
@@ -429,4 +494,7 @@
   } else {
     reveals.forEach(function (el) { el.classList.add("in"); });
   }
+  }
+
+  if (cloudOn) { loadCloud().then(boot, boot); } else { boot(); }
 })();

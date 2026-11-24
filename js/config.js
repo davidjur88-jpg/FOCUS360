@@ -22,10 +22,11 @@ window.FOCUS360 = {
     behance: ""
   },
 
-  // How the contact form sends messages (see README, "Make the contact form work"):
+  // How the contact form sends messages:
+  //   "auto"      -> saves to your Supabase admin inbox if Supabase is connected, otherwise uses "mailto". (recommended)
   //   "mailto"    -> opens the visitor's email app, addressed to you. Works instantly, no setup.
   //   "formspree" -> free form service. Paste your form ID below.
   //   "netlify"   -> only if you host on Netlify. Works with no extra setup.
-  formMode: "mailto",
+  formMode: "auto",
   formspreeId: "" // e.g. "xyzabcde"
 };
