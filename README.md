@@ -13,7 +13,9 @@ Open `js/config.js` in any text editor (Notepad, VS Code) and change:
 - `social` links (set one to `""` to hide it)
 Then replace the draft text in `about.html` ("Our story") with your real story.
 
-## 3. Add your real work
+## 3. Add your real work (two ways)
+**Easiest, no code:** use the admin page. Follow `ADMIN-SETUP.md` (Supabase, free).
+**Or by hand:**
 Open `js/projects.js`. The instructions are at the top of the file:
 copy a project block, change the title/category, set `image: "assets/work/your-file.jpg"`, `sample: false`.
 Put the images in `assets/work/`. New categories create new filter buttons automatically.
@@ -22,7 +24,8 @@ Replace the sample testimonials at the bottom of that file with real quotes, or 
 
 ## 4. Make the contact form work
 Set `formMode` in `js/config.js`:
-- `"mailto"` (default): opens the visitor's email app addressed to you. Works with zero setup.
+- `"auto"` (default): saves messages to your Supabase admin inbox if you set that up, otherwise uses `"mailto"`.
+- `"mailto"`: opens the visitor's email app addressed to you. Works with zero setup.
 - `"formspree"`: sign up free at formspree.io, create a form, paste its ID into `formspreeId`. Messages arrive in your inbox.
 - `"netlify"`: only if you host on Netlify; messages appear in your Netlify dashboard (Forms).
 Free plans have monthly limits; check current limits on their sites.
